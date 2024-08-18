@@ -33,7 +33,7 @@ inline void Line_Tree<T>::PushDown(int rt, int ln, int rn) {
 		add[rt << 1 | 1] += add[rt];
 		t[rt << 1] += add[rt] * ln;
 		t[rt << 1 | 1] += add[rt] * rn;
-		add[rt] = 0;
+		add[rt] = 0;//加完就把当前节点要向下延伸的清空
 	}
 }
 template<class T>
@@ -41,7 +41,7 @@ inline Line_Tree<T>::Line_Tree(T maxx)
 {
 	a.resize(maxx);
 	t.resize(maxx << 2);
-	add.resize(maxx << 2);
+	add.resize(maxx << 2);//懒人标记
 }
 
 template<class T>
@@ -64,11 +64,11 @@ inline void Line_Tree<T>::build(int k, int l, int r)
 		Pushup(k);    //更新父节点
 	}
 }
-//t[p]+=v
+//t[p]+=v 一般从根节点进入
 template<class T>
 inline void Line_Tree<T>::updata_single(int p, int v, int l, int r, int k)
 {
-	//p为下标，v为要加上的值，l，r为结点区间，k为结点下标
+	//p为原数组下标范围，v为要加上的值，l，r为结点区间，k为结点下标
 	if (l == r)    //左端点等于右端点，即为叶子结点，直接加上v即可
 	{
 		t[k] += v;
@@ -84,8 +84,23 @@ inline void Line_Tree<T>::updata_single(int p, int v, int l, int r, int k)
 		Pushup(k);    //更新父节点的值
 	}
 }
-
-//t[L,R]+=c
+template<class T>
+inline int Line_Tree<T>::query_single(int L, int R, int l, int r, int rt) {
+	if (L<=l&&r<=R)
+	{
+		return t[rt];
+	}
+	int m = (l + r) >> 1;
+	int sum = 0;
+	if (L <= m) {
+		sum += query_single(L, R, l, m, rt << 1);
+	}
+	if(R > m) {
+		sum += query_single(L, R, m + 1, r, rt << 1 | 1);
+	}
+	return sum;
+}
+//t[L,R]+=c 根节点为进入入口 l r一般为 1 ， n 也就是原数组的所有范围
 template<class T>
 inline void Line_Tree<T>::updata_range(int L, int R, int C, int l, int r, int rt) {
 	if (L<=l&&r<=R)
@@ -93,7 +108,7 @@ inline void Line_Tree<T>::updata_range(int L, int R, int C, int l, int r, int rt
 		t[rt] += C * (r - l + 1);////更新数字和，向上保持正确
 		add[rt] += C;////增加Add标记，表示本区间的Sum正确，子区间的Sum仍需要根据Add的值来调整
 		return;
-	}
+	} 
 	int m = (l + r) >> 1;
 	PushDown(rt, m - l + 1, r - m);
 	if (L <= m)updata_range(L, R, C, l, m, rt << 1);
@@ -102,7 +117,7 @@ inline void Line_Tree<T>::updata_range(int L, int R, int C, int l, int r, int rt
 }
 
 
-template<class T>
+template<class T>//根节点为进入入口 l r一般为 1 ， n 也就是原数组的所有范围
 inline int Line_Tree<T>::query_range(int L, int R, int l, int r, int rt) {
 	if (L <= l && r <= R) {
 		//在区间内，直接返回 当前节点值
